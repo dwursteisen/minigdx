@@ -51,6 +51,14 @@ kotlin {
         this.compilations.getByName("main").kotlinOptions.jvmTarget = "1.8"
     }
 
+    ios() {
+        this.binaries {
+            this.framework {
+                this.baseName = "MiniGdx"
+            }
+        }
+    }
+
     macosX64() {
         binaries {
             executable {
