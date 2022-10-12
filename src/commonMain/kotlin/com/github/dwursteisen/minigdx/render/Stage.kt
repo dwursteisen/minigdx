@@ -88,7 +88,13 @@ abstract class RenderStage<V : VertexShader, F : FragmentShader>(
             vertex.parameters.forEach {
                 it.create(this)
             }
+            vertex.imports.flatMap { import -> import.parameters }.forEach {
+                it.create(this)
+            }
             fragment.parameters.forEach {
+                it.create(this)
+            }
+            fragment.imports.flatMap { import -> import.parameters }.forEach {
                 it.create(this)
             }
         }
