@@ -9,9 +9,19 @@ import kotlin.jvm.JvmName
 
 sealed class ShaderParameter(val name: String) {
 
+    interface ArrayParameter {
+
+        val size: Int
+    }
+
+    interface Uniform
+    interface Attribute
+
+    interface Varying
+
     abstract fun create(program: ShaderProgram)
 
-    class UniformMat4(name: String) : ShaderParameter(name) {
+    class UniformMat4(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -20,9 +30,11 @@ sealed class ShaderParameter(val name: String) {
         fun apply(program: ShaderProgram, matrix: Mat4) {
             program.uniformMatrix4fv(program.getUniform(name), false, matrix)
         }
+
+        override fun toString() = "uniform mat4 $name;"
     }
 
-    class UniformArrayMat4(name: String) : ShaderParameter(name) {
+    class UniformArrayMat4(name: String, override val size: Int) : ShaderParameter(name), ArrayParameter, Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -45,9 +57,11 @@ sealed class ShaderParameter(val name: String) {
             }
             program.uniformMatrix4fv(program.getUniform(name), false, tmpMatrix)
         }
+
+        override fun toString() = "uniform mat4 $name[$size];"
     }
 
-    class UniformInt(name: String) : ShaderParameter(name) {
+    class UniformInt(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -61,9 +75,11 @@ sealed class ShaderParameter(val name: String) {
                 3 -> program.uniform3i(program.getUniform(name), value[0], value[1], value[2])
             }
         }
+
+        override fun toString() = "uniform int $name;"
     }
 
-    class UniformVec2(name: String) : ShaderParameter(name) {
+    class UniformVec2(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -77,9 +93,11 @@ sealed class ShaderParameter(val name: String) {
                 else -> throw IllegalArgumentException("3 values are expected. ${vec2.size} received")
             }
         }
+
+        override fun toString() = "uniform vec2 $name;"
     }
 
-    class UniformVec3(name: String) : ShaderParameter(name) {
+    class UniformVec3(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -93,9 +111,11 @@ sealed class ShaderParameter(val name: String) {
                 else -> throw IllegalArgumentException("3 values are expected. ${vec3.size} received")
             }
         }
+
+        override fun toString() = "uniform vec3 $name;"
     }
 
-    class UniformVec4(name: String) : ShaderParameter(name) {
+    class UniformVec4(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -115,9 +135,11 @@ sealed class ShaderParameter(val name: String) {
                 else -> throw IllegalArgumentException("4 values are expected. ${vec4.size} received")
             }
         }
+
+        override fun toString() = "uniform vec4 $name;"
     }
 
-    class UniformFloat(name: String) : ShaderParameter(name) {
+    class UniformFloat(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -132,9 +154,11 @@ sealed class ShaderParameter(val name: String) {
                 4 -> program.uniform4f(program.getUniform(name), value[0], value[1], value[2], value[3])
             }
         }
+
+        override fun toString(): String = "uniform float $name;"
     }
 
-    class UniformArrayFloat(name: String) : ShaderParameter(name) {
+    class UniformArrayFloat(name: String, override val size: Int) : ShaderParameter(name), ArrayParameter, Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -145,9 +169,11 @@ sealed class ShaderParameter(val name: String) {
         }
 
         fun apply(program: ShaderProgram, f: List<Float>) = apply(program, f.toTypedArray())
+
+        override fun toString() = "uniform float $name[$size];"
     }
 
-    class UniformArrayVec2(name: String) : ShaderParameter(name) {
+    class UniformArrayVec2(name: String, override val size: Int) : ShaderParameter(name), ArrayParameter, Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -158,9 +184,11 @@ sealed class ShaderParameter(val name: String) {
         }
 
         fun apply(program: ShaderProgram, f: List<Float>) = apply(program, f.toTypedArray())
+
+        override fun toString() = "uniform vec2 $name[$size];"
     }
 
-    class UniformArrayVec3(name: String) : ShaderParameter(name) {
+    class UniformArrayVec3(name: String, override val size: Int) : ShaderParameter(name), ArrayParameter, Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -172,9 +200,11 @@ sealed class ShaderParameter(val name: String) {
         }
 
         fun apply(program: ShaderProgram, f: List<Float>) = apply(program, f.toTypedArray())
+
+        override fun toString() = "uniform vec3 $name[$size];"
     }
 
-    class UniformArrayVec4(name: String) : ShaderParameter(name) {
+    class UniformArrayVec4(name: String, override val size: Int) : ShaderParameter(name), ArrayParameter, Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -192,9 +222,11 @@ sealed class ShaderParameter(val name: String) {
         }
 
         fun apply(program: ShaderProgram, f: List<Float>) = apply(program, f.toTypedArray())
+
+        override fun toString() = "uniform vec4 $name[$size];"
     }
 
-    class AttributeVec2(name: String) : ShaderParameter(name) {
+    class AttributeVec2(name: String) : ShaderParameter(name), Attribute {
 
         override fun create(program: ShaderProgram) {
             program.createAttrib(name)
@@ -212,9 +244,11 @@ sealed class ShaderParameter(val name: String) {
             )
             program.enableVertexAttribArray(program.getAttrib(name))
         }
+
+        override fun toString() = "attribute vec2 $name;"
     }
 
-    class AttributeVec3(name: String) : ShaderParameter(name) {
+    class AttributeVec3(name: String) : ShaderParameter(name), Attribute {
 
         override fun create(program: ShaderProgram) {
             program.createAttrib(name)
@@ -232,9 +266,11 @@ sealed class ShaderParameter(val name: String) {
             )
             program.enableVertexAttribArray(program.getAttrib(name))
         }
+
+        override fun toString() = "attribute vec3 $name;"
     }
 
-    class AttributeVec4(name: String) : ShaderParameter(name) {
+    class AttributeVec4(name: String) : ShaderParameter(name), Attribute {
 
         override fun create(program: ShaderProgram) {
             program.createAttrib(name)
@@ -252,9 +288,11 @@ sealed class ShaderParameter(val name: String) {
             )
             program.enableVertexAttribArray(program.getAttrib(name))
         }
+
+        override fun toString() = "attribute vec3 $name;"
     }
 
-    class UniformSample2D(name: String) : ShaderParameter(name) {
+    class UniformSample2D(name: String) : ShaderParameter(name), Uniform {
 
         override fun create(program: ShaderProgram) {
             program.createUniform(name)
@@ -265,5 +303,42 @@ sealed class ShaderParameter(val name: String) {
             program.bindTexture(GL.TEXTURE_2D, texture)
             program.uniform1i(program.getUniform(name), unit)
         }
+
+        override fun toString() = "uniform sampler2D $name;"
+    }
+
+    class VaryingVec2(name: String) : ShaderParameter(name), Varying {
+
+        override fun create(program: ShaderProgram) = Unit
+
+        override fun toString() = "varying vec2 $name;"
+    }
+
+    class VaryingVec3(name: String) : ShaderParameter(name), Varying {
+
+        override fun create(program: ShaderProgram) = Unit
+
+        override fun toString() = "varying vec3 $name;"
+    }
+
+    class VaryingVec4(name: String) : ShaderParameter(name), Varying {
+
+        override fun create(program: ShaderProgram) = Unit
+
+        override fun toString() = "varying vec4 $name;"
+    }
+
+    class VaryingFloat(name: String) : ShaderParameter(name), Varying {
+
+        override fun create(program: ShaderProgram) = Unit
+
+        override fun toString() = "varying float $name;"
+    }
+
+    class VaryingInt(name: String) : ShaderParameter(name), Varying {
+
+        override fun create(program: ShaderProgram) = Unit
+
+        override fun toString() = "varying int $name;"
     }
 }

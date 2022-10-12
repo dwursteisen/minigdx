@@ -1,5 +1,6 @@
 package com.github.dwursteisen.minigdx.shaders.vertex
 
+import com.github.dwursteisen.minigdx.render.RenderStage
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter.AttributeVec2
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter.AttributeVec3
@@ -11,25 +12,7 @@ import com.github.dwursteisen.minigdx.shaders.ShaderParameter.UniformMat4
 //language=GLSL
 private val simpleVertexShader =
     """
-        #ifdef GL_ES
-        precision highp float;
-        #endif
-        
-        const int MAX_LIGHTS = 5;
-        
-        uniform mat4 uModelView;
-        // Light information
-        uniform vec3 uLightPosition[MAX_LIGHTS];
-        uniform vec4 uLightColor[MAX_LIGHTS];
-        uniform float uLightIntensity[MAX_LIGHTS];
-        uniform int uLightNumber;
-        
-        attribute vec3 aVertexPosition;
-        attribute vec3 aVertexNormal;
-        attribute vec2 aUVPosition;
-        
-        varying vec2 vUVPosition;
-        varying vec4 vLighting;
+        const int MAX_LIGHTS = ${RenderStage.MAX_LIGHTS};
         
         void main() {
             vec4 lightColor = vec4(0.0);
@@ -52,7 +35,7 @@ private val simpleVertexShader =
             
             gl_Position = uModelView * vec4(aVertexPosition, 1.0);
             vUVPosition = aUVPosition;
-            vLighting = lightColor;
+            vLightning = lightColor;
             
         }
     """.trimIndent()
@@ -65,10 +48,13 @@ class MeshVertexShader : VertexShader(
     val aVertexNormal = AttributeVec3("aVertexNormal")
     val aUVPosition = AttributeVec2("aUVPosition")
 
-    val uLightPosition = UniformArrayVec3("uLightPosition")
-    val uLightColor = UniformArrayVec4("uLightColor")
-    val uLightIntensity = UniformArrayFloat("uLightIntensity")
+    val uLightPosition = UniformArrayVec3("uLightPosition", RenderStage.MAX_LIGHTS)
+    val uLightColor = UniformArrayVec4("uLightColor", RenderStage.MAX_LIGHTS)
+    val uLightIntensity = UniformArrayFloat("uLightIntensity", RenderStage.MAX_LIGHTS)
     val uLightNumber = ShaderParameter.UniformInt("uLightNumber")
+
+    private val vUVPosition = ShaderParameter.VaryingVec2("vUVPosition")
+    private val vLightning = ShaderParameter.VaryingVec4("vLightning")
 
     override val parameters: List<ShaderParameter> = listOf(
         uModelView,
@@ -79,5 +65,7 @@ class MeshVertexShader : VertexShader(
         uLightColor,
         uLightIntensity,
         uLightNumber,
+        vUVPosition,
+        vLightning,
     )
 }

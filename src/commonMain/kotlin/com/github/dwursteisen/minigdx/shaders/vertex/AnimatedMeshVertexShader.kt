@@ -1,5 +1,6 @@
 package com.github.dwursteisen.minigdx.shaders.vertex
 
+import com.github.dwursteisen.minigdx.render.RenderStage
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter.AttributeVec2
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter.AttributeVec3
@@ -12,35 +13,10 @@ import com.github.dwursteisen.minigdx.shaders.ShaderParameter.UniformInt
 import com.github.dwursteisen.minigdx.shaders.ShaderParameter.UniformMat4
 
 //language=GLSL
-private fun shader(maxJoints: Int): String =
+private val shader: String =
     """
-        #ifdef GL_ES
-        precision highp float;
-        #endif
-
-        const int MAX_JOINTS = $maxJoints;
         const int MAX_WEIGHTS = 4;
-        const int MAX_LIGHTS = 5;
-        
-        uniform mat4 uModelView;
-        // Light information
-        uniform vec3 uLightPosition[MAX_LIGHTS];
-        uniform vec4 uLightColor[MAX_LIGHTS];
-        uniform float uLightIntensity[MAX_LIGHTS];
-        uniform int uLightNumber;
-        
-        uniform mat4 uJointTransformationMatrix[MAX_JOINTS];
-        
-        attribute vec3 aVertexPosition;
-        attribute vec3 aVertexNormal;
-
-        attribute vec4 aJoints;
-        attribute vec4 aWeights;
-        attribute vec2 aUVPosition;
-        
-        varying vec2 vUVPosition;
-        varying vec4 vLighting;
-        
+        const int MAX_LIGHTS = ${RenderStage.MAX_LIGHTS};
         void main() {
             vec4 totalLocalPos = vec4(0.0);
             vec4 totalNormalPos = vec4(0.0);
@@ -82,17 +58,17 @@ private fun shader(maxJoints: Int): String =
             gl_Position = uModelView * totalLocalPos;
             
             vUVPosition = aUVPosition;
-            vLighting = lightColor;
+            vLightning = lightColor;
         }
 """
 
-class AnimatedMeshVertexShader(maxJoints: Int) : VertexShader(shader(maxJoints)) {
+class AnimatedMeshVertexShader(maxJoints: Int) : VertexShader(shader) {
 
     val uModelView = UniformMat4("uModelView")
-    val uJointTransformationMatrix = UniformArrayMat4("uJointTransformationMatrix")
-    val uLightPosition = UniformArrayVec3("uLightPosition")
-    val uLightColor = UniformArrayVec4("uLightColor")
-    val uLightIntensity = UniformArrayFloat("uLightIntensity")
+    val uJointTransformationMatrix = UniformArrayMat4("uJointTransformationMatrix", maxJoints)
+    val uLightPosition = UniformArrayVec3("uLightPosition", RenderStage.MAX_LIGHTS)
+    val uLightColor = UniformArrayVec4("uLightColor", RenderStage.MAX_LIGHTS)
+    val uLightIntensity = UniformArrayFloat("uLightIntensity", RenderStage.MAX_LIGHTS)
     val uLightNumber = UniformInt("uLightNumber")
 
     val aVertexPosition = AttributeVec3("aVertexPosition")
@@ -100,6 +76,9 @@ class AnimatedMeshVertexShader(maxJoints: Int) : VertexShader(shader(maxJoints))
     val aJoints = AttributeVec4("aJoints")
     val aWeights = AttributeVec4("aWeights")
     val aUVPosition = AttributeVec2("aUVPosition")
+
+    private val vUVPosition = ShaderParameter.VaryingVec2("vUVPosition")
+    private val vLightning = ShaderParameter.VaryingVec4("vLightning")
 
     override val parameters: List<ShaderParameter> = listOf(
         uModelView,
@@ -113,5 +92,7 @@ class AnimatedMeshVertexShader(maxJoints: Int) : VertexShader(shader(maxJoints))
         aUVPosition,
         aJoints,
         aWeights,
+        vUVPosition,
+        vLightning,
     )
 }

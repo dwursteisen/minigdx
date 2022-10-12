@@ -1,11 +1,12 @@
 package com.github.dwursteisen.minigdx.shaders
 
 import com.github.dwursteisen.minigdx.GL
-import kotlin.math.min
+import com.github.dwursteisen.minigdx.shaders.fragment.FragmentShader
+import com.github.dwursteisen.minigdx.shaders.vertex.VertexShader
 
 object ShaderUtils {
 
-    fun createShaderProgram(gl: GL, vertexShader: String, fragmentShader: String): ShaderProgram {
+    fun createShaderProgram(gl: GL, vertexShader: VertexShader, fragmentShader: FragmentShader): ShaderProgram {
         val vertex = compileShader(gl, vertexShader, GL.VERTEX_SHADER)
         val fragment = compileShader(gl, fragmentShader, GL.FRAGMENT_SHADER)
 
@@ -21,15 +22,22 @@ object ShaderUtils {
         return shaderProgram
     }
 
-    fun compileShader(gl: GL, vertexShader: String, type: Int): Shader {
+    fun compileShader(gl: GL, vertexShader: ShaderCode, type: Int): Shader {
+        val source = vertexShader.toString()
         val shader = gl.createShader(type)
-        gl.shaderSource(shader, vertexShader)
+        gl.shaderSource(shader, source)
         gl.compileShader(shader)
 
         if (!gl.getShaderParameterB(shader, GL.COMPILE_STATUS)) {
             val log = gl.getShaderInfoLog(shader)
             gl.deleteShader(shader)
-            throw RuntimeException("Shader compilation error: $log (${vertexShader.substring(0, min(vertexShader.length, 128))})")
+            throw RuntimeException(
+                "Shader generator class: ${vertexShader::class.simpleName}\n" +
+                    "Shader compilation error: $log \n" +
+                    "---------- \n" +
+                    "Shader code in error: \n" +
+                    source
+            )
         }
         return shader
     }
