@@ -15,7 +15,7 @@ class BoundingBoxVertexShader : VertexShader(simpleVertexShader) {
 
     val uModelView =
         ShaderParameter.UniformMat4("uModelView")
-    val uColor = ShaderParameter.UniformFloat("uColor")
+    val uColor = ShaderParameter.UniformVec4("uColor")
 
     val aVertexPosition =
         ShaderParameter.AttributeVec3("aVertexPosition")

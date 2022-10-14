@@ -12,6 +12,7 @@ import com.github.dwursteisen.minigdx.math.Vector3
 import com.github.dwursteisen.minigdx.math.toVector3
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 import kotlin.reflect.KClass
 
 class BoundingBoxComponent private constructor(
@@ -38,6 +39,7 @@ class BoundingBoxComponent private constructor(
      * Position of the left bottom back edge of the transformed box.
      */
     private val _min = Vector3()
+
     /**
      * Position of the right top frong edge of the transformed box.
      */
@@ -209,20 +211,26 @@ class BoundingBoxComponent private constructor(
                     .map { (x, y, z) -> Vector3(x, y, z) }
             }
 
+            // Find the most far edges.
+            // It will define the size of the box.
             val (min, max) = computeMinMax(vectors)
 
             val component = BoundingBoxComponent()
             component._rawMin.set(min)
             component._rawMax.set(max)
 
+            val x = max.x - min.x
+            val y = max.y - min.y
+            val z = max.z - min.z
             val scale = scale(
                 Float3(
-                    x = max.x - min.x,
-                    y = max.y - min.y,
-                    z = max.z - min.z
+                    x = sqrt(x * x) * 0.5f,
+                    y = sqrt(y * y) * 0.5f,
+                    z = sqrt(z * z) * 0.5f,
                 )
             )
 
+            // Move the Box at the center of the model
             val translation = translation(
                 Float3(
                     x = (max.x - min.x) * 0.5f + min.x,
