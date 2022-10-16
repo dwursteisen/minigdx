@@ -251,4 +251,22 @@ class PositionTest {
         assertSame(Unit, result)
         assertEquals(2f, position.scale.x)
     }
+
+    @Test
+    fun moveTest() {
+        with(Position()) {
+            move(x = 10f)
+            assertEquals(10f, translation.x)
+            assertEquals(0f, translation.y)
+            assertEquals(0f, translation.z)
+        }
+
+        with(Position()) {
+            addLocalRotation(y = 90f)
+            move(x = 10f)
+            assertEquals(0f, translation.x)
+            assertEquals(0f, translation.y)
+            assertEquals(-10f, translation.z)
+        }
+    }
 }

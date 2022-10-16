@@ -71,6 +71,20 @@ interface Simulation {
         delta: Seconds = 1f
     ): Simulation
 
+    fun move(
+        translation: Vector3,
+        using: CoordinateConverter = CoordinateConverter.Local,
+        delta: Seconds = 1f
+    ): Simulation
+
+    fun move(
+        x: Float = 0f,
+        y: Float = 0f,
+        z: Float = 0f,
+        using: CoordinateConverter = CoordinateConverter.Local,
+        delta: Seconds = 1f
+    ): Simulation
+
     fun commit(result: Any? = Unit): SimulationResult
 
     fun rollback(result: Any? = Unit): SimulationResult

@@ -91,18 +91,39 @@ class InternalSimulation(private val position: Position) : Simulation {
         return this
     }
 
-    override fun setLocalTranslation(x: Coordinate, y: Coordinate, z: Coordinate, using: CoordinateConverter): Simulation {
+    override fun setLocalTranslation(
+        x: Coordinate,
+        y: Coordinate,
+        z: Coordinate,
+        using: CoordinateConverter
+    ): Simulation {
         position.setLocalTranslation(x, y, z, using)
         return this
     }
 
-    override fun addLocalTranslation(x: Coordinate, y: Coordinate, z: Coordinate, using: CoordinateConverter, delta: Seconds): Simulation {
+    override fun addLocalTranslation(
+        x: Coordinate,
+        y: Coordinate,
+        z: Coordinate,
+        using: CoordinateConverter,
+        delta: Seconds
+    ): Simulation {
         position.addLocalTranslation(x, y, z, using, delta)
         return this
     }
 
     override fun addRotationAround(origin: Vector3, x: Degree, y: Degree, z: Degree, delta: Seconds): Simulation {
         position.addRotationAround(origin, x, y, z, delta)
+        return this
+    }
+
+    override fun move(translation: Vector3, using: CoordinateConverter, delta: Seconds): Simulation {
+        position.move(translation, using, delta)
+        return this
+    }
+
+    override fun move(x: Float, y: Float, z: Float, using: CoordinateConverter, delta: Seconds): Simulation {
+        position.move(x, y, z, using, delta)
         return this
     }
 

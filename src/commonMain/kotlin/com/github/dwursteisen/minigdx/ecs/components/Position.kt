@@ -507,6 +507,17 @@ open class Position(
     }
 
     /**
+     * Add local rotation to turn around the [other] entity.
+     */
+    fun addRotationAround(
+        other: Entity,
+        x: Degree = 0,
+        y: Degree = 0,
+        z: Degree = 0,
+        delta: Seconds = 1f
+    ): Position = addRotationAround(other.position.translation.delegate, x, y, z, delta)
+
+    /**
      * Add local rotation to the position turn around [origin]
      */
     fun addRotationAround(
@@ -527,6 +538,31 @@ open class Position(
 
         localTransformationHolder.rotation *= rotation
         return requireUpdate()
+    }
+
+    /**
+     * See [move].
+     */
+    fun move(translation: Vector3, using: CoordinateConverter = Local, delta: Seconds = 1f): Position {
+        return addLocalTranslation(translation.rotate(localQuaternion), using, delta)
+    }
+
+    /**
+     * Move the entity by taking the rotation of the entity in account.
+     *
+     * It's useful if the entity need to be moved "forward" instead of
+     * just world / parent axis.
+     *
+     * See [addLocalTranslation] otherwise.
+     */
+    fun move(
+        x: Float = 0f,
+        y: Float = 0f,
+        z: Float = 0f,
+        using: CoordinateConverter = Local,
+        delta: Seconds = 1f
+    ): Position {
+        return move(Vector3(x, y, z), using, delta)
     }
 
     /**
