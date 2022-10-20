@@ -6,7 +6,9 @@ import com.github.dwursteisen.minigdx.ecs.entities.position
 import com.github.dwursteisen.minigdx.math.ImmutableVector3
 import com.github.dwursteisen.minigdx.math.Interpolation
 import com.github.dwursteisen.minigdx.math.Interpolations
+import kotlin.jvm.JvmName
 import kotlin.reflect.KMutableProperty0
+import kotlin.reflect.KProperty0
 
 interface Tween {
 
@@ -20,10 +22,10 @@ interface Tween {
 private class TweeningExecutor(
     private val duration: Seconds,
     private val interpolation: Interpolation,
-    fields: Array<out Pair<KMutableProperty0<Float>, Float>>,
+    fields: List<Pair<KMutableProperty0<Float>, KProperty0<Float>>>,
 ) : Tween {
 
-    private val fields: List<Triple<KMutableProperty0<Float>, Float, Float>>
+    private val fields: List<Triple<KMutableProperty0<Float>, Float, KProperty0<Float>>>
 
     init {
         this.fields = fields.map { (field, endValue) ->
@@ -42,13 +44,13 @@ private class TweeningExecutor(
             elapsedDuration = duration
         }
         val percent = elapsedDuration / duration
-        val progress = if(!reverse) {
+        val progress = if (!reverse) {
             percent
         } else {
             1f - percent
         }
         fields.forEach { (field, start, end) ->
-            val currentValue = interpolation.interpolate(start, end, progress)
+            val currentValue = interpolation.interpolate(start, end.get(), progress)
             field.set(currentValue)
         }
 
@@ -63,10 +65,22 @@ private class TweeningExecutor(
 
 class Tweening(private val duration: Seconds, private val interpolation: Interpolation) {
 
-    private var fields: Array<out Pair<KMutableProperty0<Float>, Float>> = emptyArray()
+    private var fields: MutableList<Pair<KMutableProperty0<Float>, KProperty0<Float>>> = mutableListOf()
+
+    private class FixedValue(val value: Float)
 
     fun fields(vararg fields: Pair<KMutableProperty0<Float>, Float>): Tweening {
-        this.fields = fields
+        this.fields.addAll(
+            fields.toList()
+                .map { (start, endValue) -> start to FixedValue(endValue) }
+                .map { (start, end) -> start to end::value }
+        )
+        return this
+    }
+
+    @JvmName("dynamicFields")
+    fun fields(vararg fields: Pair<KMutableProperty0<Float>, KProperty0<Float>>): Tweening {
+        this.fields.addAll(fields.toList())
         return this
     }
 
@@ -92,10 +106,10 @@ class Tweening(private val duration: Seconds, private val interpolation: Interpo
 
 class Moveable private constructor(
     private val entity: Entity,
-    private val start: ImmutableVector3,
+    start: ImmutableVector3,
     private val target: ImmutableVector3,
-    private val duration: Seconds,
-    val interpolation: Interpolation = Interpolations.linear
+    duration: Seconds,
+    interpolation: Interpolation = Interpolations.linear
 ) {
 
     constructor(
@@ -126,15 +140,14 @@ class Moveable private constructor(
 
     private val tween: Tween
 
-    val mutableStart = start.mutable()
-    val mutableEnd = target.mutable()
+    private val mutableStart = start.mutable()
 
     init {
         tween = Tweening(duration, interpolation)
             .fields(
-                mutableStart::x to mutableEnd.x,
-                mutableStart::y to mutableEnd.y,
-                mutableStart::z to mutableEnd.z
+                mutableStart::x to target::x,
+                mutableStart::y to target::y,
+                mutableStart::z to target::z
             )
             .build()
     }
