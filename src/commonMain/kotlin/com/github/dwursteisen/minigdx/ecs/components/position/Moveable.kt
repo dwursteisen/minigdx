@@ -1,44 +1,185 @@
 package com.github.dwursteisen.minigdx.ecs.components.position
 
 import com.github.dwursteisen.minigdx.Seconds
+import com.github.dwursteisen.minigdx.ecs.components.Component
 import com.github.dwursteisen.minigdx.ecs.entities.Entity
 import com.github.dwursteisen.minigdx.ecs.entities.position
 import com.github.dwursteisen.minigdx.math.ImmutableVector3
 import com.github.dwursteisen.minigdx.math.Interpolation
 import com.github.dwursteisen.minigdx.math.Interpolations
-import kotlin.jvm.JvmName
-import kotlin.reflect.KMutableProperty0
-import kotlin.reflect.KProperty0
+import com.github.dwursteisen.minigdx.math.Vector2
+import com.github.dwursteisen.minigdx.math.Vector3
 
-interface Tween {
+class TweenFactoryComponent : Component {
 
-    fun reset(): Tween
+    val generatedTweens: MutableList<Tween<*>> = mutableListOf()
+
+    override fun onRemoved(entity: Entity) {
+        generatedTweens.clear()
+    }
+
+    fun <T> tween(
+        seed: T,
+        startValues: (T) -> List<Float>,
+        endValues: () -> List<Float>,
+        updateValues: (T, List<Float>) -> T,
+        duration: Seconds,
+        interpolation: Interpolation,
+        loop: Boolean = true,
+        enabled: Boolean = true,
+        reverse: Boolean = false,
+        pingpong: Boolean = false
+    ): Tween<T> {
+        val tween = TweeningExecutor(
+            duration = duration,
+            interpolation = interpolation,
+            seed = seed,
+            startValues = startValues,
+            endValues = endValues,
+            updateValues = updateValues
+        ).apply {
+            this.loop = loop
+            this.enabled = enabled
+            this.reverse = reverse
+            this.pingpong = pingpong
+        }
+        generatedTweens.add(tween)
+        return tween
+    }
+
+    fun vector3(
+        start: Vector3,
+        end: Vector3,
+        duration: Seconds,
+        interpolation: Interpolation,
+        loop: Boolean = true,
+        enabled: Boolean = true,
+        reverse: Boolean = false,
+        pingpong: Boolean = false,
+    ): Tween<Vector3> {
+        return tween(
+            seed = start,
+            startValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
+            endValues = { listOf(end.x, end.y, end.z) },
+            updateValues = { v3, values ->
+                v3.apply {
+                    x = values[0]
+                    y = values[1]
+                    z = values[2]
+                }
+            },
+            duration = duration,
+            interpolation = interpolation,
+            loop = loop,
+            enabled = enabled,
+            reverse = reverse,
+            pingpong = pingpong
+        )
+    }
+
+    fun vector2(
+        start: Vector2,
+        end: Vector2,
+        duration: Seconds,
+        interpolation: Interpolation,
+        loop: Boolean = true,
+        enabled: Boolean = true,
+        reverse: Boolean = false,
+        pingpong: Boolean = false,
+    ): Tween<Vector2> {
+        return tween(
+            seed = start,
+            startValues = { v2 -> listOf(v2.x, v2.y) },
+            endValues = { listOf(end.x, end.y) },
+            updateValues = { v2, values ->
+                v2.apply {
+                    x = values[0]
+                    y = values[1]
+                }
+            },
+            duration = duration,
+            interpolation = interpolation,
+            loop = loop,
+            enabled = enabled,
+            reverse = reverse,
+            pingpong = pingpong
+        )
+    }
+
+    fun float(
+        start: Float,
+        end: Float,
+        duration: Seconds,
+        interpolation: Interpolation,
+        loop: Boolean = true,
+        enabled: Boolean = true,
+        reverse: Boolean = false,
+        pingpong: Boolean = false,
+    ): Tween<Float> {
+        return tween(
+            seed = start,
+            startValues = { f -> listOf(f) },
+            endValues = { listOf(end) },
+            updateValues = { f, values ->
+                values.first()
+            },
+            duration = duration,
+            interpolation = interpolation,
+            loop = loop,
+            enabled = enabled,
+            reverse = reverse,
+            pingpong = pingpong
+        )
+    }
+}
+
+interface Tween<T> {
+
+    fun reset(): Tween<T>
 
     var reverse: Boolean
 
-    fun update(delta: Seconds): Float
+    var loop: Boolean
+
+    // When finished, reverse.
+    var pingpong: Boolean
+
+    var enabled: Boolean
+
+    var interpolation: Interpolation
+
+    val current: TweenResult<T>
+
+    fun update(delta: Seconds): TweenResult<T>
 }
 
-private class TweeningExecutor(
+class TweenResult<T>(value: T) {
+    var value: T = value
+        internal set
+    var percent: Float = 0f
+        internal set
+}
+private class TweeningExecutor<T>(
     private val duration: Seconds,
-    private val interpolation: Interpolation,
-    fields: List<Pair<KMutableProperty0<Float>, KProperty0<Float>>>,
-) : Tween {
-
-    private val fields: List<Triple<KMutableProperty0<Float>, Float, KProperty0<Float>>>
-
-    init {
-        this.fields = fields.map { (field, endValue) ->
-            val startValue = field.get()
-            Triple(field, startValue, endValue)
-        }
-    }
+    override var interpolation: Interpolation,
+    private val seed: T,
+    private val startValues: (T) -> List<Float>,
+    private val endValues: () -> List<Float>,
+    private val updateValues: (T, List<Float>) -> T,
+) : Tween<T> {
 
     private var elapsedDuration: Seconds = 0f
 
     override var reverse = false
+    override var loop: Boolean = true
+    override var pingpong: Boolean = true
+    override var enabled: Boolean = true
 
-    override fun update(delta: Seconds): Float {
+    private val computedStartValues = startValues(seed)
+
+    override val current = TweenResult(seed)
+
+    override fun update(delta: Seconds): TweenResult<T> {
         elapsedDuration += delta
         if (elapsedDuration > duration) {
             elapsedDuration = duration
@@ -49,58 +190,26 @@ private class TweeningExecutor(
         } else {
             1f - percent
         }
-        fields.forEach { (field, start, end) ->
-            val currentValue = interpolation.interpolate(start, end.get(), progress)
-            field.set(currentValue)
+        val end = endValues()
+
+        val current = computedStartValues.mapIndexed { index, v -> interpolation.interpolate(v, end[index], progress) }
+        val seedUpdated = updateValues(seed, current)
+
+        if (percent >= 1.0 && loop) {
+            reset()
+        }
+        if (percent >= 1.0 && pingpong) {
+            reverse = !reverse
         }
 
-        return percent
+        this.current.percent = percent
+        this.current.value = seedUpdated
+        return this.current
     }
 
-    override fun reset(): Tween {
+    override fun reset(): Tween<T> {
         elapsedDuration = 0f
         return this
-    }
-}
-
-class Tweening(private val duration: Seconds, private val interpolation: Interpolation) {
-
-    private var fields: MutableList<Pair<KMutableProperty0<Float>, KProperty0<Float>>> = mutableListOf()
-
-    private class FixedValue(val value: Float)
-
-    fun fields(vararg fields: Pair<KMutableProperty0<Float>, Float>): Tweening {
-        this.fields.addAll(
-            fields.toList()
-                .map { (start, endValue) -> start to FixedValue(endValue) }
-                .map { (start, end) -> start to end::value }
-        )
-        return this
-    }
-
-    @JvmName("dynamicFields")
-    fun fields(vararg fields: Pair<KMutableProperty0<Float>, KProperty0<Float>>): Tweening {
-        this.fields.addAll(fields.toList())
-        return this
-    }
-
-    fun build(): Tween {
-        return TweeningExecutor(duration, interpolation, fields)
-    }
-
-    companion object {
-
-        fun elastic(duration: Seconds): Tweening {
-            return Tweening(duration, Interpolations.elastic)
-        }
-
-        fun linear(duration: Seconds): Tweening {
-            return Tweening(duration, Interpolations.linear)
-        }
-
-        fun pow(duration: Seconds): Tweening {
-            return Tweening(duration, Interpolations.pow)
-        }
     }
 }
 
@@ -138,25 +247,33 @@ class Moveable private constructor(
         interpolation
     )
 
-    private val tween: Tween
+    private val tween: Tween<Vector3>
 
     private val mutableStart = start.mutable()
 
     init {
-        tween = Tweening(duration, interpolation)
-            .fields(
-                mutableStart::x to target::x,
-                mutableStart::y to target::y,
-                mutableStart::z to target::z
-            )
-            .build()
+        tween = TweeningExecutor(
+            duration = duration,
+            interpolation = interpolation,
+            seed = mutableStart,
+            startValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
+            endValues = { listOf(target.x, target.y, target.z) },
+            updateValues = { v3, values ->
+                v3.apply {
+                    x = values[0]
+                    y = values[1]
+                    z = values[2]
+                }
+            },
+
+        )
     }
 
     fun update(delta: Seconds): Boolean {
-        val percent = tween.update(delta)
+        val result = tween.update(delta)
 
         entity.position.setGlobalTranslation(mutableStart)
 
-        return (percent >= 1.0f)
+        return (result.percent >= 1.0f)
     }
 }

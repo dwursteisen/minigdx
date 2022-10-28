@@ -14,6 +14,7 @@ import com.github.dwursteisen.minigdx.ecs.systems.ScriptExecutorSystem
 import com.github.dwursteisen.minigdx.ecs.systems.SpriteAnimatedSystem
 import com.github.dwursteisen.minigdx.ecs.systems.System
 import com.github.dwursteisen.minigdx.ecs.systems.TextEffectSystem
+import com.github.dwursteisen.minigdx.ecs.systems.TweenSystem
 import com.github.dwursteisen.minigdx.file.AssetsManagerSystem
 import com.github.dwursteisen.minigdx.graphics.FrameBuffer
 import com.github.dwursteisen.minigdx.imgui.ImGuiRenderStage
@@ -52,9 +53,10 @@ interface Game {
         ArmatureUpdateSystem(),
         ScriptExecutorSystem(),
         TextEffectSystem(),
+        TweenSystem(),
         CameraTrackSystem(),
         ParticlesEmitterSystem(),
-        ParticlesUpdateSystem()
+        ParticlesUpdateSystem(),
     )
 
     /**
