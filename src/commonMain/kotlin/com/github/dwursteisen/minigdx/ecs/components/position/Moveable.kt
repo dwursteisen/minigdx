@@ -196,7 +196,7 @@ private class TweeningExecutor<T>(
         val seedUpdated = updateValues(seed, current)
 
         if (percent >= 1.0 && loop) {
-            reset()
+            elapsedDuration = 0f
         }
         if (percent >= 1.0 && pingpong) {
             reverse = !reverse
@@ -209,6 +209,7 @@ private class TweeningExecutor<T>(
 
     override fun reset(): Tween<T> {
         elapsedDuration = 0f
+        updateValues(seed, computedStartValues)
         return this
     }
 }
