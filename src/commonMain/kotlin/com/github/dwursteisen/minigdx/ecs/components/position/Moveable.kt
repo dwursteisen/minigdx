@@ -20,8 +20,8 @@ class TweenFactoryComponent : Component {
 
     fun <T> tween(
         seed: T,
-        startValues: (T) -> List<Float>,
-        endValues: () -> List<Float>,
+        end: T,
+        extractValues: (T) -> List<Float>,
         updateValues: (T, List<Float>) -> T,
         duration: Seconds,
         interpolation: Interpolation,
@@ -34,8 +34,8 @@ class TweenFactoryComponent : Component {
             duration = duration,
             interpolation = interpolation,
             seed = seed,
-            startValues = startValues,
-            endValues = endValues,
+            end = end,
+            extractValues = extractValues,
             updateValues = updateValues
         ).apply {
             this.loop = loop
@@ -59,8 +59,8 @@ class TweenFactoryComponent : Component {
     ): Tween<Vector3> {
         return tween(
             seed = start,
-            startValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
-            endValues = { listOf(end.x, end.y, end.z) },
+            end = end,
+            extractValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
             updateValues = { v3, values ->
                 v3.apply {
                     x = values[0]
@@ -89,8 +89,8 @@ class TweenFactoryComponent : Component {
     ): Tween<Vector2> {
         return tween(
             seed = start,
-            startValues = { v2 -> listOf(v2.x, v2.y) },
-            endValues = { listOf(end.x, end.y) },
+            end = end,
+            extractValues = { v2 -> listOf(v2.x, v2.y) },
             updateValues = { v2, values ->
                 v2.apply {
                     x = values[0]
@@ -118,9 +118,9 @@ class TweenFactoryComponent : Component {
     ): Tween<Float> {
         return tween(
             seed = start,
-            startValues = { f -> listOf(f) },
-            endValues = { listOf(end) },
-            updateValues = { f, values ->
+            end = end,
+            extractValues = { f -> listOf(f) },
+            updateValues = { _, values ->
                 values.first()
             },
             duration = duration,
@@ -150,6 +150,12 @@ interface Tween<T> {
 
     val current: TweenResult<T>
 
+    fun updateStart(value: T): Tween<T>
+
+    fun updateEnd(value: T): Tween<T>
+
+    var duration: Float
+
     fun update(delta: Seconds): TweenResult<T>
 }
 
@@ -160,11 +166,11 @@ class TweenResult<T>(value: T) {
         internal set
 }
 private class TweeningExecutor<T>(
-    private val duration: Seconds,
+    override var duration: Seconds,
     override var interpolation: Interpolation,
-    private val seed: T,
-    private val startValues: (T) -> List<Float>,
-    private val endValues: () -> List<Float>,
+    private var seed: T,
+    private var end: T,
+    private val extractValues: (T) -> List<Float>,
     private val updateValues: (T, List<Float>) -> T,
 ) : Tween<T> {
 
@@ -175,7 +181,8 @@ private class TweeningExecutor<T>(
     override var pingpong: Boolean = true
     override var enabled: Boolean = true
 
-    private val computedStartValues = startValues(seed)
+    private var computedStartValues = extractValues(seed)
+    private var computedEndValues = extractValues(end)
 
     override val current = TweenResult(seed)
 
@@ -190,9 +197,9 @@ private class TweeningExecutor<T>(
         } else {
             1f - percent
         }
-        val end = endValues()
-
-        val current = computedStartValues.mapIndexed { index, v -> interpolation.interpolate(v, end[index], progress) }
+        val current = computedStartValues.mapIndexed { index, v ->
+            interpolation.interpolate(v, computedEndValues[index], progress)
+        }
         val seedUpdated = updateValues(seed, current)
 
         if (percent >= 1.0 && loop) {
@@ -210,6 +217,18 @@ private class TweeningExecutor<T>(
     override fun reset(): Tween<T> {
         elapsedDuration = 0f
         updateValues(seed, computedStartValues)
+        return this
+    }
+
+    override fun updateStart(value: T): Tween<T> {
+        seed = value
+        computedStartValues = extractValues(value)
+        return this
+    }
+
+    override fun updateEnd(value: T): Tween<T> {
+        end = value
+        computedEndValues = extractValues(value)
         return this
     }
 }
@@ -257,8 +276,8 @@ class Moveable private constructor(
             duration = duration,
             interpolation = interpolation,
             seed = mutableStart,
-            startValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
-            endValues = { listOf(target.x, target.y, target.z) },
+            end = target.mutable(),
+            extractValues = { v3 -> listOf(v3.x, v3.y, v3.z) },
             updateValues = { v3, values ->
                 v3.apply {
                     x = values[0]
