@@ -1,3 +1,5 @@
 package com.github.dwursteisen.minigdx.shaders
 
-actual class Shader
+import platform.glescommon.GLuint
+
+actual class Shader(val address: GLuint)

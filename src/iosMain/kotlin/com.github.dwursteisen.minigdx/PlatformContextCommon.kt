@@ -12,7 +12,7 @@ actual open class PlatformContextCommon actual constructor(actual override val c
 
     override var postRenderLoop: () -> Unit = {}
 
-    actual override fun createGL(): GL = TODO()
+    actual override fun createGL(): GL = OpenGL()
 
     actual override fun createFileHandler(logger: Logger, gameContext: GameContext): FileHandler {
         TODO()

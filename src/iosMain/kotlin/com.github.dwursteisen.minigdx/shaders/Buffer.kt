@@ -1,3 +1,3 @@
 package com.github.dwursteisen.minigdx.shaders
 
-actual class Buffer
+actual class Buffer(val address: UInt)

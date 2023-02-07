@@ -1,3 +1,3 @@
 package com.github.dwursteisen.minigdx.shaders
 
-actual class RenderBufferReference
+actual class RenderBufferReference(val address: UInt)

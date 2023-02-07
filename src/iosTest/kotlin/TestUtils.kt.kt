@@ -12,5 +12,5 @@ actual fun createGameConfiguration(): GameConfiguration {
 }
 
 actual fun createTextureImage(): TextureImage {
-    return TextureImage(10, 10)
+    return TextureImage(10, 10, Unit)
 }
