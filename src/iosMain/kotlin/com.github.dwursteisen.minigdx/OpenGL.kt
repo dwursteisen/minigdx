@@ -17,6 +17,7 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cstr
+import kotlinx.cinterop.get
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.usePinned
@@ -84,6 +85,7 @@ import platform.glescommon.GLintVar
  * iOS OpenGL implementation.
  *
  * @see: https://github.com/gergelydaniel/kgl/blob/main/kgl-ios/src/nativeMain/kotlin/com.danielgergely.kgl/KglIos.kt
+ * @see: https://github.com/inoutch/kotlin-gl/blob/master/src/iosArm64Main/kotlin/io/github/inoutch/kotlin/gl/api/gl.kt
  */
 class OpenGL : GL {
     override fun clearColor(r: Percent, g: Percent, b: Percent, a: Percent) {
@@ -140,11 +142,14 @@ class OpenGL : GL {
     }
 
     override fun getString(parameterName: Int): String {
-        val getString = ByteArray(124)
-        getString.usePinned {
-            glGetString(parameterName.toUInt())
+        val result = glGetString(parameterName.toUInt()) ?: return ""
+        val array = mutableListOf<Byte>()
+        var i = 0
+        while (result[i] != 0u.toUByte()) {
+            array.add(result[i].toByte())
+            i++
         }
-        return getString.decodeToString()
+        return array.toString()
     }
 
     override fun getShaderParameter(shader: Shader, mask: ByteMask): Any {
@@ -167,6 +172,7 @@ class OpenGL : GL {
         return Shader(glCreateShader(type.toUInt()))
     }
 
+    @Suppress("USELESS_CAST")
     override fun shaderSource(shader: Shader, source: String) {
         val arena = Arena()
         try {

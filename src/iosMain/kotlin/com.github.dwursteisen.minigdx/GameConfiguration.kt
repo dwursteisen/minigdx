@@ -32,4 +32,15 @@ actual class GameConfiguration(
      * increase this default limit.
      */
     actual val jointLimit: Int = 50,
+
+    /**
+     * MiniGDX Delegate is the class helping to link the iOS world to the MiniGDX world.
+     *
+     * An implementation should be created for each application.
+     * This is also this implementation that should be call into the iOS app
+     * with the correct signal.
+     *
+     * Please refer to the documentation of the [MinigdxDelegate] for usage.
+     */
+    val minigdxDelegate: MinigdxDelegate,
 )
