@@ -19,6 +19,7 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.refTo
+import kotlinx.cinterop.signExtend
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
@@ -42,6 +43,7 @@ import platform.gles3.glDeleteShader
 import platform.gles3.glDepthFunc
 import platform.gles3.glDisable
 import platform.gles3.glDrawArrays
+import platform.gles3.glDrawElements
 import platform.gles3.glEnable
 import platform.gles3.glEnableVertexAttribArray
 import platform.gles3.glFramebufferRenderbuffer
@@ -86,6 +88,7 @@ import platform.glescommon.GLintVar
  *
  * @see: https://github.com/gergelydaniel/kgl/blob/main/kgl-ios/src/nativeMain/kotlin/com.danielgergely.kgl/KglIos.kt
  * @see: https://github.com/inoutch/kotlin-gl/blob/master/src/iosArm64Main/kotlin/io/github/inoutch/kotlin/gl/api/gl.kt
+ * @see: https://github.com/norman784/kotlin-native-opengl-tutorial
  */
 class OpenGL : GL {
     override fun clearColor(r: Percent, g: Percent, b: Percent, a: Percent) {
@@ -142,7 +145,7 @@ class OpenGL : GL {
     }
 
     override fun getString(parameterName: Int): String {
-        val result = glGetString(parameterName.toUInt()) ?: return ""
+        val result = glGetString(parameterName.toUInt()) ?: return "(Unknown)"
         val array = mutableListOf<Byte>()
         var i = 0
         while (result[i] != 0u.toUByte()) {
@@ -229,33 +232,50 @@ class OpenGL : GL {
     }
 
     override fun bufferData(target: ByteMask, data: DataSource, usage: Int) {
-        val size = when (data) {
-            is DataSource.FloatDataSource -> data.floats.size
-            is DataSource.IntDataSource -> data.ints.size
-            is DataSource.ShortDataSource -> data.shorts.size
-            is DataSource.DoubleDataSource -> data.double.size
-            is DataSource.UIntDataSource -> data.ints.size
-        }
-
         when (data) {
-            is DataSource.FloatDataSource -> data.floats.usePinned {
-                glBufferData(target.toUInt(), size.toLong(), it.addressOf(0), usage.toUInt())
+            is DataSource.FloatDataSource -> {
+                if (data.floats.isEmpty()) return
+
+                glBufferData(
+                    target.toUInt(),
+                    (data.floats.size * FLOAT_BYTE_SIZE).signExtend(),
+                    data.floats.refTo(0),
+                    usage.toUInt()
+                )
             }
 
-            is DataSource.IntDataSource -> data.ints.usePinned {
-                glBufferData(target.toUInt(), size.toLong(), it.addressOf(0), usage.toUInt())
+            is DataSource.IntDataSource -> {
+                glBufferData(
+                    target.toUInt(),
+                    (data.ints.size * INT_BYTE_SIZE).signExtend(),
+                    data.ints.refTo(0),
+                    usage.toUInt()
+                )
             }
 
-            is DataSource.ShortDataSource -> data.shorts.usePinned {
-                glBufferData(target.toUInt(), size.toLong(), it.addressOf(0), usage.toUInt())
+            is DataSource.ShortDataSource -> glBufferData(
+                target.toUInt(),
+                (data.shorts.size * INT_BYTE_SIZE).signExtend(),
+                data.shorts.refTo(0),
+                usage.toUInt()
+            )
+
+            is DataSource.UIntDataSource -> {
+                glBufferData(
+                    target.toUInt(),
+                    (data.ints.size * INT_BYTE_SIZE).signExtend(),
+                    data.ints.refTo(0),
+                    usage.toUInt()
+                )
             }
 
-            is DataSource.UIntDataSource -> data.ints.usePinned {
-                glBufferData(target.toUInt(), size.toLong(), it.addressOf(0), usage.toUInt())
-            }
-
-            is DataSource.DoubleDataSource -> data.double.usePinned {
-                glBufferData(target.toUInt(), size.toLong(), it.addressOf(0), usage.toUInt())
+            is DataSource.DoubleDataSource -> {
+                glBufferData(
+                    target.toUInt(),
+                    (data.double.size * FLOAT_BYTE_SIZE).toLong(),
+                    data.double.refTo(0),
+                    usage.toUInt()
+                )
             }
         }
     }
@@ -407,10 +427,7 @@ class OpenGL : GL {
     }
 
     override fun drawElements(mask: ByteMask, vertexCount: Int, type: Int, offset: Int) {
-        // The interface needs to be updated to pass the indices.
-        // On other implementation, it can be skip. Don't think it will be possible here.
-        // glDrawElements(mask.toUInt(), vertexCount, type.toUInt(), offset)
-        TODO()
+        glDrawElements(mask.toUInt(), vertexCount * INT_BYTE_SIZE, type.toUInt(), null)
     }
 
     override fun viewport(x: Int, y: Int, width: Int, height: Int) {
@@ -467,4 +484,9 @@ class OpenGL : GL {
     private fun Boolean.toGl(): GLboolean = if (this) 1u else 0u
 
     private fun UByte.toBoolean() = this != GL_FALSE.toUByte()
+
+    companion object {
+        private const val INT_BYTE_SIZE = 4
+        private const val FLOAT_BYTE_SIZE = 4
+    }
 }

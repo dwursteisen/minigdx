@@ -4,6 +4,7 @@ import com.github.dwursteisen.minigdx.file.FileHandler
 import com.github.dwursteisen.minigdx.file.FileHandlerCommon
 import com.github.dwursteisen.minigdx.file.PlatformFileHandler
 import com.github.dwursteisen.minigdx.game.Game
+import com.github.dwursteisen.minigdx.game.GameWrapper
 import com.github.dwursteisen.minigdx.graphics.FillViewportStrategy
 import com.github.dwursteisen.minigdx.graphics.ViewportStrategy
 import com.github.dwursteisen.minigdx.input.IOSInputHandler
@@ -11,10 +12,13 @@ import com.github.dwursteisen.minigdx.input.InputHandler
 import com.github.dwursteisen.minigdx.logger.IOSLogger
 import com.github.dwursteisen.minigdx.logger.Logger
 
-actual open class PlatformContextCommon actual constructor(actual override val configuration: GameConfiguration) :
-    PlatformContext {
+actual open class PlatformContextCommon actual constructor(
+    actual override val configuration: GameConfiguration
+) : PlatformContext {
 
     override var postRenderLoop: () -> Unit = {}
+
+    private lateinit var gameWrapper: GameWrapper
 
     actual override fun createGL(): GL = OpenGL()
 
@@ -49,7 +53,21 @@ actual open class PlatformContextCommon actual constructor(actual override val c
             configuration.minigdxDelegate.height.toInt(),
 
         )
+
         val gameContext = GameContext(this, gameResolution)
         gameContext.logPlatform()
+
+        this.gameWrapper = GameWrapper(gameContext, gameFactory(gameContext))
+
+        gameWrapper.create()
+        gameWrapper.resume()
+
+        configuration.minigdxDelegate.registerUpdateMethod(::update)
+    }
+
+    fun update(delta: Seconds) {
+        gameWrapper.render(delta)
+        postRenderLoop()
+        postRenderLoop = { }
     }
 }

@@ -64,9 +64,10 @@ class ImGuiBatchRender(
         )
 
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, verticesOrderBuffer)
+        val indices = verticesOrder.map { it.toShort() }.toShortArray()
         gl.bufferData(
             target = GL.ELEMENT_ARRAY_BUFFER,
-            data = DataSource.ShortDataSource(verticesOrder.map { it.toShort() }.toShortArray()),
+            data = DataSource.ShortDataSource(indices),
             usage = GL.STATIC_DRAW
         )
 
@@ -91,7 +92,7 @@ class ImGuiBatchRender(
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, verticesOrderBuffer)
         gl.drawElements(
             GL.TRIANGLES,
-            verticesOrder.size,
+            indices.size,
             GL.UNSIGNED_SHORT,
             0
         )

@@ -13,9 +13,24 @@ internal class GameNode(
     var children: List<GameNode> = emptyList()
 ) {
     fun bootstrap(gameContext: GameContext) = gameContext.postRenderLoop {
-        game.createDefaultSystems(engine).forEach { engine.addSystem(it) }
-        game.createSystems(engine).forEach { engine.addSystem(it) }
-        game.createPostRenderSystem(engine).forEach { engine.addSystem(it) }
+
+        val defaultSystems = game.createDefaultSystems(engine)
+        defaultSystems.forEach { engine.addSystem(it) }
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Created ${defaultSystems.size} default systems"
+        }
+
+        val gameSystems = game.createSystems(engine)
+        gameSystems.forEach { engine.addSystem(it) }
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Created ${gameSystems.size} game systems"
+        }
+
+        val postRenderSystem = game.createPostRenderSystem(engine)
+        postRenderSystem.forEach { engine.addSystem(it) }
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Created ${postRenderSystem.size} post render systems"
+        }
 
         // FIXME: code cleanup
         fun traverse(frameBuffer: FrameBuffer): List<FrameBuffer> {
@@ -27,6 +42,11 @@ internal class GameNode(
         gameContext.frameBuffers = frameBuffers
             .flatMap { traverse(it) }
             .associateBy { buffer -> buffer.name }
+
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Created ${gameContext.frameBuffers.size} framebuffers " +
+                "(named: ${gameContext.frameBuffers.keys.joinToString()})"
+        }
 
         // Check if there is one frame buffer that will render on screen
         // And therefore, will take the lead on the render stage.
@@ -59,9 +79,19 @@ internal class GameNode(
         game.createEntities(engine.entityFactory)
         // Load assets that can be loaded
         gameContext.assetsManager.update()
+
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Compiling ${renderStage.size + debugRenderStage.size + frameBuffers.size} shaders"
+        }
+
         renderStage.forEach { it.compileShaders() }
         debugRenderStage.forEach { it.compileShaders() }
         frameBuffers.forEach { it.compileShaders() }
+
+        gameContext.logger.debug("BOOTSTRAP") {
+            "Bootstrap sequence finished. Will start the game by calling onGameStart"
+        }
+
         engine.onGameStart()
     }
 }

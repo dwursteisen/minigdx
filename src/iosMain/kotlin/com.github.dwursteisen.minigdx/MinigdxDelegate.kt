@@ -29,7 +29,14 @@ abstract class MinigdxDelegate(val gameFactory: (GameContext) -> Game) {
         println("onTouch - from Kotlin")
     }
 
+    private var onUpdateDelegate: (Seconds) -> Unit = { }
+
     fun onUpdate(delta: Seconds) {
         println("onUpdate $delta - from Kotlin")
+        onUpdateDelegate(delta)
+    }
+
+    internal fun registerUpdateMethod(update: (Seconds) -> Unit) {
+        onUpdateDelegate = update
     }
 }
