@@ -13,7 +13,9 @@ import com.github.dwursteisen.minigdx.shaders.Uniform
 import kotlinx.cinterop.Arena
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.COpaque
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.UByteVarOf
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cstr
@@ -82,6 +84,7 @@ import platform.gles3.glVertexAttribPointer
 import platform.gles3.glViewport
 import platform.glescommon.GLboolean
 import platform.glescommon.GLintVar
+import platform.glescommon.GLubyte
 
 /**
  * iOS OpenGL implementation.
@@ -145,14 +148,14 @@ class OpenGL : GL {
     }
 
     override fun getString(parameterName: Int): String {
-        val result = glGetString(parameterName.toUInt()) ?: return "(Unknown)"
+        val result: CPointer<UByteVarOf<GLubyte>> = glGetString(parameterName.toUInt()) ?: return "(Unknown)"
         val array = mutableListOf<Byte>()
         var i = 0
         while (result[i] != 0u.toUByte()) {
             array.add(result[i].toByte())
             i++
         }
-        return array.toString()
+        return array.toByteArray().decodeToString()
     }
 
     override fun getShaderParameter(shader: Shader, mask: ByteMask): Any {
