@@ -59,7 +59,6 @@ abstract class RenderStage<V : VertexShader, F : FragmentShader>(
             return privateLights.take(MAX_LIGHTS)
         }
 
-    // FIXME: rollback change
     val program: ShaderProgram
         get() = _program
 

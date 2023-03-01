@@ -17,8 +17,11 @@ import com.github.dwursteisen.minigdx.ecs.systems.TextEffectSystem
 import com.github.dwursteisen.minigdx.ecs.systems.TweenSystem
 import com.github.dwursteisen.minigdx.file.AssetsManagerSystem
 import com.github.dwursteisen.minigdx.graphics.FrameBuffer
+import com.github.dwursteisen.minigdx.imgui.ImGuiRenderStage
+import com.github.dwursteisen.minigdx.render.AnimatedModelRenderStage
 import com.github.dwursteisen.minigdx.render.BoundingBoxRenderStage
 import com.github.dwursteisen.minigdx.render.ClearBufferRenderStage
+import com.github.dwursteisen.minigdx.render.ModelComponentRenderStage
 import com.github.dwursteisen.minigdx.render.RenderStage
 
 interface Game {
@@ -93,9 +96,8 @@ interface Game {
         clearColor?.run {
             stages.add(ClearBufferRenderStage(gameContext, this))
         }
-        // FIXME: Add it again later
-        // stages.add(ModelComponentRenderStage(gameContext))
-        // stages.add(AnimatedModelRenderStage(gameContext))
+        stages.add(ModelComponentRenderStage(gameContext))
+        stages.add(AnimatedModelRenderStage(gameContext))
         return stages
     }
 
@@ -107,8 +109,7 @@ interface Game {
         if (options.debug) {
             stages.add(BoundingBoxRenderStage(gameContext))
         }
-        // FIXME: Add it again later
-        // stages.add(ImGuiRenderStage(gameContext))
+        stages.add(ImGuiRenderStage(gameContext))
         return stages
     }
 

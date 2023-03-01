@@ -48,14 +48,25 @@ actual open class PlatformContextCommon actual constructor(
 
     actual override fun start(gameFactory: (GameContext) -> Game) {
         // Compute the Game Resolution regarding the configuration
-        val gameResolution = configuration.gameScreenConfiguration.screen(
-            configuration.minigdxDelegate.width.toInt(),
-            configuration.minigdxDelegate.height.toInt(),
+        val (width, height) = configuration.minigdxDelegate.getMainScreenSize()
 
+        val gameResolution = configuration.gameScreenConfiguration.screen(
+            width,
+            height,
         )
 
         val gameContext = GameContext(this, gameResolution)
         gameContext.logPlatform()
+
+        gameContext.deviceScreen.height = height
+        gameContext.deviceScreen.width = width
+        gameContext.frameBufferScreen.height = width
+        gameContext.frameBufferScreen.width = height
+        gameContext.viewport.update(
+            gameContext.gl,
+            gameResolution,
+            gameResolution
+        )
 
         this.gameWrapper = GameWrapper(gameContext, gameFactory(gameContext))
 
