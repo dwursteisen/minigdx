@@ -26,12 +26,15 @@ class TextureLoader : FileLoader<Texture> {
         val content = handler.create(filename, result)
 
         textureImageLoader.load(filename, handler).onLoaded { textureImage ->
+            handler.gameContext.logger.warn("TEXTURE"){ "TEXTURE IMAGE LOADED ${textureImage.width} ${textureImage.height}"}
             // The final texture is loaded.
             // Load this texture instead of the default one.
-            result.textureImage = textureImage
-            result.height = textureImage.height
-            result.width = textureImage.width
-            handler.gameContext.assetsManager.add(result)
+            //result.textureImage = textureImage
+            //result.height = textureImage.height
+            //result.width = textureImage.width
+            // FIXME: We don't care about the texture as drawing with this texture make the application crash
+
+            // handler.gameContext.assetsManager.add(result)
         }
         return content
     }

@@ -90,6 +90,8 @@ class ImGuiBatchRender(
         fragmentShader.uUV.apply(program, texture = texture.textureReference!!, unit = 0)
 
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, verticesOrderBuffer)
+
+        gameContext.logger.warn("IMGUI") { "Draw"}
         gl.drawElements(
             GL.TRIANGLES,
             indices.size,

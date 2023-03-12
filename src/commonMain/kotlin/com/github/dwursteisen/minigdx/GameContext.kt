@@ -4,6 +4,7 @@ import com.github.dwursteisen.minigdx.file.AssetsManager
 import com.github.dwursteisen.minigdx.file.FileHandler
 import com.github.dwursteisen.minigdx.game.StoryboardEvent
 import com.github.dwursteisen.minigdx.graphics.FrameBuffer
+import com.github.dwursteisen.minigdx.graphics.LogGL
 import com.github.dwursteisen.minigdx.graphics.ViewportStrategy
 import com.github.dwursteisen.minigdx.input.InputHandler
 import com.github.dwursteisen.minigdx.logger.Logger
@@ -30,16 +31,22 @@ class Options(
     val jointLimit: Int = 50
 )
 
-class GameScreen(val width: Pixel, val height: Pixel, val ratio: Ratio = width / height.toFloat())
+data class GameScreen(val width: Pixel, val height: Pixel, val ratio: Ratio = width / height.toFloat())
 
-class DeviceScreen(var width: Pixel, var height: Pixel)
+data class DeviceScreen(var width: Pixel, var height: Pixel)
 
 class GameContext(
-    val platformContext: PlatformContext,
+    private val platformContext: PlatformContext,
     gameResolution: Resolution
 ) {
-    val gl: GL = platformContext.createGL()
+
     val logger: Logger = platformContext.createLogger()
+
+    val gl: GL = if(platformContext.configuration.debugOpenGl) {
+        LogGL(logger, platformContext.createGL())
+    } else {
+        platformContext.createGL()
+    }
 
     val fileHandler: FileHandler = platformContext.createFileHandler(logger, this)
     val input: InputHandler = platformContext.createInputHandler(logger, this)
@@ -108,6 +115,10 @@ class GameContext(
         logger.info("MINIGDX") { "OpenGL Version   : \t" + gl.getString(GL.VERSION) }
         logger.info("MINIGDX") { "OpenGL Shading   : \t" + gl.getString(GL.SHADING_LANGUAGE_VERSION) }
         logger.info("MINIGDX") { "OpenGL Extensions: \t" + gl.getString(GL.EXTENSIONS) }
+        logger.info("MINIGDX") { "--- Screen information ---" }
+        logger.info("MINIGDX") { "Game Screen       : \t$gameScreen" }
+        logger.info("MINIGDX") { "Devise Screen     : \t$deviceScreen" }
+        logger.info("MINIGDX") { "Framebuffer Screen: \t$frameBufferScreen" }
     }
 
     internal fun postRenderLoop(block: () -> Unit) {

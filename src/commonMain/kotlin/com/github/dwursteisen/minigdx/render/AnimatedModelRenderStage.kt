@@ -61,6 +61,7 @@ class AnimatedModelRenderStage(gameContext: GameContext) :
             fragment.uUV.apply(program, primitive.texture.textureReference!!, unit = 0)
 
             gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, primitive.verticesOrderBuffer!!)
+            gameContext.logger.warn("ANIMATED") { "Draw"}
             gl.drawElements(
                 GL.TRIANGLES,
                 primitive.verticesOrder.size,

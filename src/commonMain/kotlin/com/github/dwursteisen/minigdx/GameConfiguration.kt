@@ -21,6 +21,11 @@ expect class GameConfiguration {
     val debug: Boolean
 
     /**
+     * Is OpenGL should log all commands?
+     */
+    val debugOpenGl: Boolean
+
+    /**
      * Joint limit: the number of maximum joints that can
      * be loaded by the game engine.
      *

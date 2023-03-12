@@ -82,6 +82,7 @@ class BoundingBoxRenderStage(gameContext: GameContext) : RenderStage<BoundingBox
             vertex.uColor.apply(program, -1f, -1f, -1f, -1f)
         }
         gl.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, primitive.verticesOrderBuffer!!)
+        gameContext.logger.warn("BOUNDING") { "draw"}
         gl.drawElements(
             mask = GL.LINES,
             vertexCount = primitive.verticesOrder.size,

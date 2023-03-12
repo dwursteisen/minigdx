@@ -6,6 +6,10 @@ import org.w3c.dom.HTMLCanvasElement
 actual class GameConfiguration(
     actual val gameName: String,
     actual val debug: Boolean,
+    /**
+     * Is OpenGL should log all commands?
+     */
+    actual val debugOpenGl: Boolean = false,
     actual val jointLimit: Int = 50,
     /**
      * Configuration of the game screen.

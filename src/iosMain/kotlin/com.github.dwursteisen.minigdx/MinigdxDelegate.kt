@@ -52,6 +52,7 @@ abstract class MinigdxDelegate(val gameFactory: (GameContext) -> Game) {
                     gameScreenConfiguration = GameScreenConfiguration.WithRatio(9f / 16f),
                     gameName = "IOS Game",
                     debug = true,
+                    debugOpenGl = true,
                     minigdxDelegate = this
                 )
             },

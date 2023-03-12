@@ -10,6 +10,10 @@ actual class GameConfiguration(
      */
     actual val gameScreenConfiguration: GameScreenConfiguration,
     actual val debug: Boolean,
+    /**
+     * Is OpenGL should log all commands?
+     */
+    actual val debugOpenGl: Boolean = false,
     actual val jointLimit: Int = 50,
-    val activity: MiniGdxActivity? = null
+    val activity: MiniGdxActivity? = null,
 )

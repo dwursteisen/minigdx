@@ -18,13 +18,21 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.UByteVarOf
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.signExtend
 import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
+import platform.Foundation.NSData
+import platform.Foundation.NSError
+import platform.Foundation.create
+import platform.GLKit.GLKTextureInfo
+import platform.GLKit.GLKTextureLoader
+import platform.GLKit.GLKTextureLoaderCallback
 import platform.gles3.GL_FALSE
 import platform.gles3.GL_INFO_LOG_LENGTH
 import platform.gles3.glActiveTexture
@@ -148,7 +156,8 @@ class OpenGL : GL {
     }
 
     override fun getString(parameterName: Int): String {
-        val result: CPointer<UByteVarOf<GLubyte>> = glGetString(parameterName.toUInt()) ?: return "(Unknown)"
+        val result: CPointer<UByteVarOf<GLubyte>> =
+            glGetString(parameterName.toUInt()) ?: return "(Unknown)"
         val array = mutableListOf<Byte>()
         var i = 0
         while (result[i] != 0u.toUByte()) {
@@ -248,6 +257,8 @@ class OpenGL : GL {
             }
 
             is DataSource.IntDataSource -> {
+                if (data.ints.isEmpty()) return
+
                 glBufferData(
                     target.toUInt(),
                     (data.ints.size * INT_BYTE_SIZE).signExtend(),
@@ -256,14 +267,20 @@ class OpenGL : GL {
                 )
             }
 
-            is DataSource.ShortDataSource -> glBufferData(
-                target.toUInt(),
-                (data.shorts.size * INT_BYTE_SIZE).signExtend(),
-                data.shorts.refTo(0),
-                usage.toUInt()
-            )
+            is DataSource.ShortDataSource -> {
+                if (data.shorts.isEmpty()) return
+
+                glBufferData(
+                    target.toUInt(),
+                    (data.shorts.size * INT_BYTE_SIZE).signExtend(),
+                    data.shorts.refTo(0),
+                    usage.toUInt()
+                )
+            }
 
             is DataSource.UIntDataSource -> {
+                if (data.ints.isEmpty()) return
+
                 glBufferData(
                     target.toUInt(),
                     (data.ints.size * INT_BYTE_SIZE).signExtend(),
@@ -273,6 +290,8 @@ class OpenGL : GL {
             }
 
             is DataSource.DoubleDataSource -> {
+                if (data.double.isEmpty()) return
+
                 glBufferData(
                     target.toUInt(),
                     (data.double.size * FLOAT_BYTE_SIZE).toLong(),
@@ -291,7 +310,14 @@ class OpenGL : GL {
         glDepthFunc(target.toUInt())
     }
 
-    override fun vertexAttribPointer(index: Int, size: Int, type: Int, normalized: Boolean, stride: Int, offset: Int) {
+    override fun vertexAttribPointer(
+        index: Int,
+        size: Int,
+        type: Int,
+        normalized: Boolean,
+        stride: Int,
+        offset: Int
+    ) {
         glVertexAttribPointer(
             index.toUInt(),
             size,
@@ -315,7 +341,8 @@ class OpenGL : GL {
         textures.usePinned {
             glGenTextures(1, it.addressOf(0))
         }
-        return TextureReference(textures[0])
+        val textureReference = TextureReference(textures[0])
+        return textureReference
     }
 
     override fun createFrameBuffer(): FrameBufferReference {
@@ -330,7 +357,11 @@ class OpenGL : GL {
         glBindFramebuffer(GL.FRAMEBUFFER.toUInt(), frameBufferReference.address)
     }
 
-    override fun frameBufferTexture2D(attachmentPoint: Int, textureReference: TextureReference, level: Int) {
+    override fun frameBufferTexture2D(
+        attachmentPoint: Int,
+        textureReference: TextureReference,
+        level: Int
+    ) {
         glFramebufferTexture2D(
             GL.FRAMEBUFFER.toUInt(),
             attachmentPoint.toUInt(),
@@ -360,7 +391,10 @@ class OpenGL : GL {
         glRenderbufferStorage(GL.RENDERBUFFER.toUInt(), internalformat.toUInt(), width, height)
     }
 
-    override fun framebufferRenderbuffer(attachementType: Int, renderBufferReference: RenderBufferReference) {
+    override fun framebufferRenderbuffer(
+        attachementType: Int,
+        renderBufferReference: RenderBufferReference
+    ) {
         glFramebufferRenderbuffer(
             GL.FRAMEBUFFER.toUInt(),
             attachementType.toUInt(),
@@ -405,7 +439,13 @@ class OpenGL : GL {
         glUniform3f(uniform.address, first, second, third)
     }
 
-    override fun uniform4f(uniform: Uniform, first: Float, second: Float, third: Float, fourth: Float) {
+    override fun uniform4f(
+        uniform: Uniform,
+        first: Float,
+        second: Float,
+        third: Float,
+        fourth: Float
+    ) {
         glUniform4f(uniform.address, first, second, third, fourth)
     }
 

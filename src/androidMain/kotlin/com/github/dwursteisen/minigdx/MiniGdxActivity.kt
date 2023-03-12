@@ -10,6 +10,7 @@ abstract class MiniGdxActivity(
     private val gameName: String = "missing game name",
     private val gameScreenConfiguration: GameScreenConfiguration,
     private val debug: Boolean = false,
+    private val debugOpengGl: Boolean = false,
     private val jointLimit: Int = 50,
 ) : Activity() {
 
@@ -22,6 +23,7 @@ abstract class MiniGdxActivity(
                     gameName,
                     gameScreenConfiguration,
                     debug,
+                    debugOpengGl,
                     jointLimit,
                     this
                 )

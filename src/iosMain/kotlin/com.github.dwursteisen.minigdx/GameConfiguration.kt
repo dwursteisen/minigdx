@@ -34,6 +34,11 @@ actual class GameConfiguration(
     actual val jointLimit: Int = 50,
 
     /**
+     * Is OpenGL should log all commands?
+     */
+    actual val debugOpenGl: Boolean = false,
+
+    /**
      * MiniGDX Delegate is the class helping to link the iOS world to the MiniGDX world.
      *
      * An implementation should be created for each application.

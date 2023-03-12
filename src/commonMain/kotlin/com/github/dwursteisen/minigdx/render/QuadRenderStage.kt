@@ -59,6 +59,8 @@ class QuadRenderStage(
 
         textureFrameBuffer.updateFragmentShader(delta)
 
+        gameContext.logger.warn("QUAD") { "Draw"}
+
         gl.drawElements(
             GL.TRIANGLES,
             size,

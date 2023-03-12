@@ -4,6 +4,10 @@ actual class GameConfiguration(
     actual val gameName: String,
     actual val gameScreenConfiguration: GameScreenConfiguration,
     actual val debug: Boolean = false,
+    /**
+     * Is OpenGL should log all commands?
+     */
+    actual val debugOpenGl: Boolean = false,
     actual val jointLimit: Int = 50,
     /**
      * Configuration of the application window.
